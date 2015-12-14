@@ -40,7 +40,8 @@ public class MainActivity extends AppCompatActivity implements EvernoteLoginFrag
     @Override
     public void onLoginFinished(boolean successful) {
         if (successful) {
-            Log.i("MAIN", "Login correcto!");
+            Intent intent = new Intent(MainActivity.this, ListaActivity.class);
+            startActivity(intent);
         } else {
             Log.e("MAIN", "Error en login");
         }
