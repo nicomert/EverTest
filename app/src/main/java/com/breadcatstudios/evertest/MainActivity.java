@@ -1,15 +1,25 @@
 package com.breadcatstudios.evertest;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class MainActivity extends AppCompatActivity {
+import com.evernote.client.android.EvernoteSession;
+import com.evernote.client.android.login.EvernoteLoginFragment;
+
+public class MainActivity extends AppCompatActivity implements EvernoteLoginFragment.ResultCallback {
+
+    // credenciales de acceso
+    private static final String consumerKey = "nicomert";
+    private static final String consumerSecret = "48fcd44627503921";
+    private static final EvernoteSession.EvernoteService EVERNOTE_SERVICE = EvernoteSession.EvernoteService.SANDBOX;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,14 +28,22 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+        // inicializacion de la sesion con evernote
+        new EvernoteSession.Builder(this)
+                .setEvernoteService(EVERNOTE_SERVICE)
+                .build(consumerKey, consumerSecret)
+                .asSingleton();
+
+        EvernoteSession.getInstance().authenticate(MainActivity.this);
+    }
+
+    @Override
+    public void onLoginFinished(boolean successful) {
+        if (successful) {
+            Log.i("MAIN", "Login correcto!");
+        } else {
+            Log.e("MAIN", "Error en login");
+        }
     }
 
     @Override
