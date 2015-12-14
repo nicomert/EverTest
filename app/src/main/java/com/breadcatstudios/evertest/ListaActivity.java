@@ -8,6 +8,8 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -26,6 +28,7 @@ import com.evernote.edam.notestore.NotesMetadataResultSpec;
 import com.evernote.edam.type.NoteSortOrder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ListaActivity extends AppCompatActivity {
@@ -50,6 +53,19 @@ public class ListaActivity extends AppCompatActivity {
         if (!EvernoteSession.getInstance().isLoggedIn())
             return;
 
+        getSupportActionBar().setTitle("EverTest");
+
+        // se consulta la lista de notas
+        ConsultaListaNotas(true);
+    }
+
+    private void ConsultaListaNotas(final boolean ordenaPorFecha) {
+        // se vacia la lista en caso de que tenga contenido
+        if(listaNotasTexto.size() > 0) {
+            listaNotasTexto = new ArrayList<String>();
+            listaNotasScroll.setAdapter(new ArrayAdapter<String>(ListaActivity.this, android.R.layout.simple_list_item_1, listaNotasTexto));
+        }
+
         // se crea un nuevo hilo para lanzar las peticiones a evernote
         Thread thread = new Thread(new Runnable(){
             @Override
@@ -63,7 +79,10 @@ public class ListaActivity extends AppCompatActivity {
 
                     // se inicializan los parametros para la consulta
                     NoteFilter filter = new NoteFilter();
-                    filter.setOrder(NoteSortOrder.UPDATED.getValue());
+                    if(ordenaPorFecha == true)
+                        filter.setOrder(NoteSortOrder.UPDATED.getValue());
+                    else
+                        filter.setOrder(NoteSortOrder.TITLE.getValue());
 
                     int offset = 0;
                     int maxNotes = 10;
@@ -76,11 +95,18 @@ public class ListaActivity extends AppCompatActivity {
                     do {
                         notas = noteStoreClient.findNotesMetadata(filter, offset, maxNotes, resultSpec);
                         for (NoteMetadata nota : notas.getNotes()){
-                            // se anyade la nota a la lista scrollable de notas
-                            AnyadeNota(nota.getTitle());
+                            // se anyade la nota a la lista de notas
+                            listaNotasTexto.add(nota.getTitle());
                         }
                         offset = offset + notas.getNotesSize();
                     } while (notas.getTotalNotes() > offset);
+
+                    // si se trata de una busqueda por nombre, se invierte el orden de la coleccion
+                    if(!ordenaPorFecha)
+                        Collections.reverse(listaNotasTexto);
+
+                    // se actualiza la vista con la lista scrollable de notas
+                    ActualizaListaNotas();
 
                 }catch(Exception e){
                     Log.e("LISTA", "ERROR: " + e);
@@ -90,15 +116,14 @@ public class ListaActivity extends AppCompatActivity {
         thread.start();
     }
 
-    // permite anyadir una nueva nota a la lista scrollable
-    private void AnyadeNota(final String tituloNota) {
+
+    // actualiza la lista scrollable de notas
+    private void ActualizaListaNotas() {
         // se ejecuta la incorporacion de las notas desde el hilo principal de la aplicacion
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
-
-                // se anyade la nota a la lista de notas
-                listaNotasTexto.add(tituloNota);
+                // se anyaden las notas a la lista de notas
                 listaNotasScroll.setAdapter(new ArrayAdapter<String>(ListaActivity.this, android.R.layout.simple_list_item_1, listaNotasTexto));
                 listaNotasScroll.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
@@ -108,5 +133,34 @@ public class ListaActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // se infla el menu y se anyaden los botones
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        // se especifica la accion para cada uno de los botones
+        switch (item.getItemId()) {
+            case R.id.action_crear:
+                break;
+            case R.id.action_ordenar:
+                break;
+            case R.id.action_pornombre:
+                ConsultaListaNotas(false);
+                break;
+            case R.id.action_porfecha:
+                ConsultaListaNotas(true);
+                break;
+            default:
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 }
