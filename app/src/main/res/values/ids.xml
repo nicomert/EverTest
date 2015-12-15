@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">EverTest</string>
+    <string name="consumerKey">nicomert</string>
+    <string name="consumerSecret">48fcd44627503921</string>
+    <string name="developerToken">S=s1:U=91cd8:E=158f927b841:C=151a1768998:P=1cd:A=en-devtoken:V=2:H=721e02b60e8f3fb7b12ef52c1e7377a9</string>
 </resources>

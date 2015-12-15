@@ -17,8 +17,6 @@ import com.evernote.client.android.login.EvernoteLoginFragment;
 public class MainActivity extends AppCompatActivity implements EvernoteLoginFragment.ResultCallback {
 
     // credenciales de acceso
-    private static final String consumerKey = "nicomert";
-    private static final String consumerSecret = "48fcd44627503921";
     private static final EvernoteSession.EvernoteService EVERNOTE_SERVICE = EvernoteSession.EvernoteService.SANDBOX;
 
     @Override
@@ -31,7 +29,7 @@ public class MainActivity extends AppCompatActivity implements EvernoteLoginFrag
         // inicializacion de la sesion con evernote
         new EvernoteSession.Builder(this)
                 .setEvernoteService(EVERNOTE_SERVICE)
-                .build(consumerKey, consumerSecret)
+                .build(getResources().getString(R.string.consumerKey), getResources().getString(R.string.consumerSecret))
                 .asSingleton();
 
         EvernoteSession.getInstance().authenticate(MainActivity.this);

@@ -39,9 +39,6 @@ import java.util.List;
 
 public class ListaActivity extends AppCompatActivity {
 
-    // token de desarrollador para verificar las operaciones realizadas
-    String developerToken = "S=s1:U=91cd8:E=158f927b841:C=151a1768998:P=1cd:A=en-devtoken:V=2:H=721e02b60e8f3fb7b12ef52c1e7377a9";
-
     // lista que contiene las notas creadas por el usuario
     public ListView listaNotasScroll;
     private List<String> listaNotasTexto;
@@ -85,7 +82,7 @@ public class ListaActivity extends AppCompatActivity {
                 try {
 
                     // se crea el cliente para acceder a las notas
-                    EvernoteAuth evernoteAuth = new EvernoteAuth(EvernoteService.SANDBOX, developerToken);
+                    EvernoteAuth evernoteAuth = new EvernoteAuth(EvernoteService.SANDBOX, getResources().getString(R.string.developerToken));
                     ClientFactory clientFactory = new ClientFactory(evernoteAuth);
                     noteStoreClient = clientFactory.createNoteStoreClient();
 
