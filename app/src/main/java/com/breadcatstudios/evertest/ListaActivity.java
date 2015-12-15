@@ -1,5 +1,7 @@
 package com.breadcatstudios.evertest;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -25,6 +27,7 @@ import com.evernote.edam.notestore.NoteFilter;
 import com.evernote.edam.notestore.NoteMetadata;
 import com.evernote.edam.notestore.NotesMetadataList;
 import com.evernote.edam.notestore.NotesMetadataResultSpec;
+import com.evernote.edam.type.Note;
 import com.evernote.edam.type.NoteSortOrder;
 
 import java.util.ArrayList;
@@ -39,6 +42,10 @@ public class ListaActivity extends AppCompatActivity {
     // lista que contiene las notas creadas por el usuario
     public ListView listaNotasScroll;
     private List<String> listaNotasTexto;
+    private List<String> listaNotasGuid;
+
+    // cliente para la consulta de las notas
+    private NoteStoreClient noteStoreClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +54,7 @@ public class ListaActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         listaNotasTexto = new ArrayList<String>();
+        listaNotasGuid = new ArrayList<String>();
         listaNotasScroll = (ListView)findViewById(R.id.listaNotasScroll);
 
         // se comprueba que el usuario este autorizado
@@ -63,11 +71,12 @@ public class ListaActivity extends AppCompatActivity {
         // se vacia la lista en caso de que tenga contenido
         if(listaNotasTexto.size() > 0) {
             listaNotasTexto = new ArrayList<String>();
+            listaNotasGuid = new ArrayList<String>();
             listaNotasScroll.setAdapter(new ArrayAdapter<String>(ListaActivity.this, android.R.layout.simple_list_item_1, listaNotasTexto));
         }
 
         // se crea un nuevo hilo para lanzar las peticiones a evernote
-        Thread thread = new Thread(new Runnable(){
+        Thread hiloNotas = new Thread(new Runnable(){
             @Override
             public void run() {
                 try {
@@ -75,7 +84,7 @@ public class ListaActivity extends AppCompatActivity {
                     // se crea el cliente para acceder a las notas
                     EvernoteAuth evernoteAuth = new EvernoteAuth(EvernoteService.SANDBOX, developerToken);
                     ClientFactory clientFactory = new ClientFactory(evernoteAuth);
-                    NoteStoreClient noteStoreClient = clientFactory.createNoteStoreClient();
+                    noteStoreClient = clientFactory.createNoteStoreClient();
 
                     // se inicializan los parametros para la consulta
                     NoteFilter filter = new NoteFilter();
@@ -97,13 +106,16 @@ public class ListaActivity extends AppCompatActivity {
                         for (NoteMetadata nota : notas.getNotes()){
                             // se anyade la nota a la lista de notas
                             listaNotasTexto.add(nota.getTitle());
+                            listaNotasGuid.add(nota.getGuid());
                         }
                         offset = offset + notas.getNotesSize();
                     } while (notas.getTotalNotes() > offset);
 
                     // si se trata de una busqueda por nombre, se invierte el orden de la coleccion
-                    if(!ordenaPorFecha)
+                    if(!ordenaPorFecha) {
                         Collections.reverse(listaNotasTexto);
+                        Collections.reverse(listaNotasGuid);
+                    }
 
                     // se actualiza la vista con la lista scrollable de notas
                     ActualizaListaNotas();
@@ -113,7 +125,7 @@ public class ListaActivity extends AppCompatActivity {
                 }
             }
         });
-        thread.start();
+        hiloNotas.start();
     }
 
 
@@ -128,11 +140,66 @@ public class ListaActivity extends AppCompatActivity {
                 listaNotasScroll.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,long arg3) {
-                        Log.d("LISTA", "Se ha pulsado el indice " + arg2);
+                        // si se hace tap, se consulta la informacion que contiene dicha nota
+                        ConsultaNota(arg2);
                     }
                 });
             }
         });
+    }
+
+    // realiza la consulta de la informacion de una nota pasada por parametro
+    private void ConsultaNota(final int index){
+        // se crea el hilo que realiza la consulta de la nota
+        Thread hiloNota = new Thread(new Runnable(){
+            @Override
+            public void run() {
+                try {
+                    // se carga el contenido completo de la nota
+                    final Note fullNote = noteStoreClient.getNote(listaNotasGuid.get(index), true, true, false, false);
+
+                    // se crea la pantalla flotante que contiene el contenido de la nota
+                    ListaActivity.this.runOnUiThread(new Runnable() {
+                        public void run() {
+                            new AlertDialog.Builder(ListaActivity.this)
+                                    .setTitle("" + DesmontaXML(fullNote.getTitle()))
+                                    .setMessage("" + DesmontaXML(fullNote.getContent()))
+                                    .setNegativeButton(R.string.button_cerrar, new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            // do nothing
+                                        }
+                                    })
+                                    .show();
+                        }
+                    });
+                }catch(Exception e){
+                    Log.e("LISTA", "ERROR cargando la nota " + index + ": " + e);
+                }
+            }
+        });
+        hiloNota.start();
+    }
+
+    // desmonta un xml y obtiene el contenido plano del mismo
+    private String DesmontaXML(String xmltext){
+        String resultado = "" + '\n';
+        // se comprueba si se esta consultando una etiqueta del xml
+        boolean tag = false;
+        for(int i=0; i<xmltext.length(); i++){
+            if(xmltext.charAt(i) == '<'){
+                tag = true;
+                if(resultado.charAt(resultado.length()-1) != '\n')
+                    resultado += '\n';
+            }else if(xmltext.charAt(i) == '>'){
+                tag = false;
+            }else{
+                // si no hay ningun tag abierto, se trata del contenido del xml
+                if(tag == false)
+                    if(xmltext.charAt(i) != '\n')
+                        resultado += xmltext.charAt(i);
+            }
+        }
+        return resultado;
     }
 
     @Override

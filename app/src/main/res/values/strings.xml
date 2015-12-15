@@ -5,5 +5,6 @@
     <string name="action_ordenar">Ordenar</string>
     <string name="action_pornombre">Ordenar por Título</string>
     <string name="action_porfecha">Ordenar por Fecha</string>
+    <string name="button_cerrar">Cerrar</string>
     <string name="title_activity_lista">ListaActivity</string>
 </resources>
