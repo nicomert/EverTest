@@ -9,12 +9,15 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import com.evernote.auth.EvernoteAuth;
@@ -61,7 +64,7 @@ public class ListaActivity extends AppCompatActivity {
         if (!EvernoteSession.getInstance().isLoggedIn())
             return;
 
-        getSupportActionBar().setTitle("EverTest");
+        getSupportActionBar().setTitle(R.string.app_name);
 
         // se consulta la lista de notas
         ConsultaListaNotas(true);
@@ -203,6 +206,73 @@ public class ListaActivity extends AppCompatActivity {
         return resultado;
     }
 
+    // crea una ventana para crear una nueva nota
+    private void NuevaNota(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.texto_nuevanota);
+
+        // box para introducir el titulo de la nota
+        final EditText tituloInput = new EditText(this);
+        tituloInput.setHint(R.string.texto_titulo);
+        tituloInput.setInputType(InputType.TYPE_CLASS_TEXT);
+
+        // box para introducir el contenido de la nota
+        final EditText contenidoInput = new EditText(this);
+        contenidoInput.setHint(R.string.texto_contenido);
+        contenidoInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+
+        LinearLayout layout = new LinearLayout(getApplicationContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.addView(tituloInput);
+        layout.addView(contenidoInput);
+        builder.setView(layout);
+
+        // definicion de los botones de aceptar y cancelar
+        builder.setPositiveButton(R.string.button_guardar, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //m_Text = input.getText().toString();
+                GuardaNota(tituloInput.getText().toString(), contenidoInput.getText().toString());
+
+                ConsultaListaNotas(true);
+            }
+        });
+        builder.setNegativeButton(R.string.button_cancelar, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
+    }
+
+    public void GuardaNota(String noteTitle, String noteBody) {
+
+        String nBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+        nBody += "<!DOCTYPE en-note SYSTEM \"http://xml.evernote.com/pub/enml2.dtd\">";
+        nBody += "<en-note>" + noteBody + "</en-note>";
+
+        // se crea el objeto nota
+        final Note nuevaNota = new Note();
+        nuevaNota.setTitle(noteTitle);
+        nuevaNota.setContent(nBody);
+
+        // se crea el hilo que realiza la consulta de la nota
+        Thread hiloNuevaNota = new Thread(new Runnable(){
+            @Override
+            public void run() {
+                try {
+                    // se crea una nueva nota a traves del cliente
+                    noteStoreClient.createNote(nuevaNota);
+                } catch (Exception e) {
+                    // Other unexpected exceptions
+                    e.printStackTrace();
+                }
+            }
+        });
+        hiloNuevaNota.start();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // se infla el menu y se anyaden los botones
@@ -216,6 +286,7 @@ public class ListaActivity extends AppCompatActivity {
         // se especifica la accion para cada uno de los botones
         switch (item.getItemId()) {
             case R.id.action_crear:
+                NuevaNota();
                 break;
             case R.id.action_ordenar:
                 break;

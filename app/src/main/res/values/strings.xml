@@ -1,10 +1,20 @@
 <resources>
     <string name="app_name">EverTest</string>
+
     <string name="action_settings">Settings</string>
+
     <string name="action_crear">Crear</string>
     <string name="action_ordenar">Ordenar</string>
     <string name="action_pornombre">Ordenar por Título</string>
     <string name="action_porfecha">Ordenar por Fecha</string>
+
     <string name="button_cerrar">Cerrar</string>
+    <string name="button_guardar">Guardar</string>
+    <string name="button_cancelar">Cancelar</string>
+
+    <string name="texto_nuevanota">Nueva Nota</string>
+    <string name="texto_titulo">Título</string>
+    <string name="texto_contenido">Contenido</string>
+
     <string name="title_activity_lista">ListaActivity</string>
 </resources>
