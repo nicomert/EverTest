@@ -185,6 +185,7 @@ public class ListaActivity extends AppCompatActivity {
         String resultado = "" + '\n';
         // se comprueba si se esta consultando una etiqueta del xml
         boolean tag = false;
+
         for(int i=0; i<xmltext.length(); i++){
             if(xmltext.charAt(i) == '<'){
                 tag = true;
